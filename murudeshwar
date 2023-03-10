@@ -1,0 +1,109 @@
+import requests
+
+# API Key
+api_key = "AIzaSyAy2UhMZS-UfFauB24NZ6WIoNIcmWaEe9k"
+
+# Function to fetch the details of the hotels
+def fetch_hotel_details(location, area=None, next_page_token=None):
+    # Base URL for the Google Places API
+    base_url = "https://maps.googleapis.com/maps/api/place/textsearch/json?"
+    
+    # Query parameters
+    parameters = {
+        "query": "hotels in " + location,
+        "key": api_key,
+        "fields": "name,formatted_address,place_id,formatted_phone_number"
+    }
+    
+    # Add area to the query if specified
+    if area:
+        parameters["query"] += " " + area
+    
+    # Add next page token to the query if specified
+    if next_page_token:
+        parameters["pagetoken"] = next_page_token
+    
+    # Fetch the details of the hotels
+    response = requests.get(base_url, parameters)
+    data = response.json()
+    
+    # Return the details of the hotels and the next page token
+    return data["results"], data.get("next_page_token", None)
+
+# Function to fetch the Google rating of a hotel
+def fetch_google_rating(place_id):
+    # Base URL for the Google Places API
+    base_url = "https://maps.googleapis.com/maps/api/place/details/json?"
+    
+    # Query parameters
+    parameters = {
+        "place_id": place_id,
+        "key": api_key
+    }
+    
+    # Fetch the details of the hotel
+    response = requests.get(base_url, parameters)
+    data = response.json()
+    
+    # Return the Google rating of the hotel
+    try:
+        return data["result"]["rating"]
+    except KeyError:
+        return "No Google Rating Available"
+
+    
+    
+    
+    
+    
+# Location to search for hotels in
+location = "581350"
+
+
+
+
+
+
+# Fetch the areas in the location
+base_url = "https://maps.googleapis.com/maps/api/place/textsearch/json?"
+parameters = {
+    "query": "areas in " + location,
+    "key": api_key
+}
+
+response = requests.get(base_url, parameters)
+data = response.json()
+areas = [result["name"] for result in data["results"]]
+
+# Fetch the details of the hotels in each area
+hotel_details = []
+for area in areas:
+    next_page_token = None
+    while True:
+        result, next_page_token = fetch_hotel_details(location, area, next_page_token)
+        hotel_details.extend(result)
+        if not next_page_token:
+            break
+
+# Loop through the hotel details and fetch the Google rating and phone number of each hotel
+hotels = {}
+for hotel in hotel_details:
+    name = hotel["name"]
+    if name in hotels:
+        continue
+    rating = fetch_google_rating(hotel["place_id"])
+    phone_number = hotel.get("formatted_phone_number", "Phone Number Not Available")
+    address = hotel["formatted_address"]
+    hotels[name] = {"address": address, "phone_number": phone_number, "google_rating": rating}
+
+# Print the details of the hotels
+print(f"Total number of hotels found in {location}: {len(hotels)}")
+print(f"Number of API requests made: {len(areas)}")
+print("\n\n")
+
+for name, details in hotels.items():
+    print("Name:", name)
+    print("Address:", details["address"])
+    print("Google Rating:", details["google_rating"])
+    print("Phone Number:", details["phone_number"])
+    print("\n")
