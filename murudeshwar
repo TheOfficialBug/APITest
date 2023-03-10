@@ -1,7 +1,7 @@
 import requests
 
 # API Key
-api_key = "AIzaSyAy2UhMZS-UfFauB24NZ6WIoNIcmWaEe9k"
+api_key = "API_Key"
 
 # Function to fetch the details of the hotels
 def fetch_hotel_details(location, area=None, next_page_token=None):
